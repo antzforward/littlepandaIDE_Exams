@@ -30,3 +30,22 @@
 *.exe
 *.out
 *.app
+
+#little panda IDE config files
+app.ico
+*.bookmarks
+*.debug
+*.layout
+makefile.win
+*_private.h
+*_private.res
+
+## Tools
+Release/*
+fd.exe
+parser.py
+
+#FPS
+HUSTOJ-FPS/
+Exams/
+
