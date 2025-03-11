@@ -35,6 +35,7 @@ NUL
 #little panda IDE config files
 *.bookmarks
 *.debug
+*.layout
 makefile.win
 
 ## Tools
