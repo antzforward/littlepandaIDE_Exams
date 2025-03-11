@@ -9,7 +9,7 @@ Libs =
 Bins = 
 ResourceIncludes = 
 MakeIncludes = 
-PrivateResource = Code02_private.rc
+PrivateResource = 
 Compiler = 
 CppCompiler = 
 Linker = 
@@ -53,7 +53,14 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = UTF-8
+RealEncoding = ASCII
+
+
+[CompilerSettings]
+cc_cmd_opt_optimize = 2
+cc_cmd_opt_std = c++17
+cc_cmd_opt_use_pipe = on
+link_cmd_opt_strip_exe = on
 
 
 [VersionInfo]
@@ -74,10 +81,3 @@ ProductName =
 ProductVersion = 
 AutoIncBuildNr = 0
 SyncProduct = 1
-
-
-[CompilerSettings]
-cc_cmd_opt_optimize = 2
-cc_cmd_opt_std = c++17
-cc_cmd_opt_use_pipe = on
-link_cmd_opt_strip_exe = on
