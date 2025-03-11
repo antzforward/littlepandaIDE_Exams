@@ -41,6 +41,7 @@ makefile.win
 ## Tools
 Release/*
 fd.exe
+EasyFPSViewer*
 parser.py
 
 #FPS
