@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+NUL
 
 # Precompiled Headers
 *.gch
@@ -32,13 +33,9 @@
 *.app
 
 #little panda IDE config files
-app.ico
 *.bookmarks
 *.debug
-*.layout
 makefile.win
-*_private.h
-*_private.res
 
 ## Tools
 Release/*
