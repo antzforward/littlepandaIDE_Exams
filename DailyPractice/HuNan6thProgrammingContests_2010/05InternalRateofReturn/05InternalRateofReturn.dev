@@ -1,6 +1,6 @@
 [Project]
-filename = 04BilliardsCollision.dev
-name = 04BilliardsCollision
+filename = 05InternalRateofReturn.dev
+name = 05InternalRateofReturn
 UnitCount = 1
 Type = 1
 Ver = 3
@@ -9,7 +9,7 @@ Libs =
 Bins = 
 ResourceIncludes = 
 MakeIncludes = 
-PrivateResource = 04BilliardsCollision_private.rc
+PrivateResource = 
 Compiler = 
 CppCompiler = 
 Linker = 
