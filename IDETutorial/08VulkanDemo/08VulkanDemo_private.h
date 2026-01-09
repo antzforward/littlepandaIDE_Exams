@@ -1,8 +1,8 @@
 /* THIS FILE WILL BE OVERWRITTEN BY Red Panda C++ */
 /* DO NOT EDIT ! */
 
-#ifndef 01DigitalConversion_private_rc
-#define 01DigitalConversion_private_rc
+#ifndef 08VulkanDemo_private_rc
+#define 08VulkanDemo_private_rc
 
 /* VERSION DEFINITIONS */
 #define VER_STRING	"1.0.0.0"
@@ -11,13 +11,13 @@
 #define VER_RELEASE	0
 #define VER_BUILD	0
 #define COMPANY_NAME	""
-#define FILE_VERSION	"0.1"
+#define FILE_VERSION	""
 #define FILE_DESCRIPTION	"Developed using the Red Panda C++ IDE"
 #define INTERNAL_NAME	""
 #define LEGAL_COPYRIGHT	""
 #define LEGAL_TRADEMARKS	""
-#define ORIGINAL_FILENAME	"01DigitalConversion.exe"
-#define PRODUCT_NAME	"01DigitalConversion"
-#define PRODUCT_VERSION	"0.1.1.1"
+#define ORIGINAL_FILENAME	""
+#define PRODUCT_NAME	""
+#define PRODUCT_VERSION	""
 
-#endif /*01DigitalConversion_private_rc*/
+#endif /*08VulkanDemo_private_rc*/
