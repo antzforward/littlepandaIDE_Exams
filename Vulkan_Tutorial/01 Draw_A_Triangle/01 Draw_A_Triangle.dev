@@ -9,7 +9,7 @@ Libs =
 Bins = 
 ResourceIncludes = 
 MakeIncludes = 
-PrivateResource = 
+PrivateResource = 01_Draw_A_Triangle_private.rc
 Compiler = 
 CppCompiler = 
 Linker = -lvulkan-1 -lglfw3 -lglew32 -lwinmm -lgdi32
@@ -34,7 +34,7 @@ SupportXPThemes = 0
 CompilerSet = 0
 StaticLink = 1
 AddCharset = 1
-ExecEncoding = SYSTEM
+ExecEncoding = UTF-8
 Encoding = UTF-8
 ModelType = 0
 ClassBrowserType = 0
@@ -56,13 +56,6 @@ FileEncoding = PROJECT
 RealEncoding = UTF-8
 
 
-[CompilerSettings]
-cc_cmd_opt_optimize = 2
-cc_cmd_opt_std = c++17
-cc_cmd_opt_use_pipe = on
-link_cmd_opt_strip_exe = on
-
-
 [VersionInfo]
 Major = 1
 Minor = 0
@@ -81,3 +74,25 @@ ProductName =
 ProductVersion = 
 AutoIncBuildNr = 0
 SyncProduct = 1
+
+
+[CompilerSettings]
+c_cmd_opt_std = 
+cc_cmd_opt_abort_on_error = 
+cc_cmd_opt_check_iso_conformance = 
+cc_cmd_opt_debug_info = 
+cc_cmd_opt_inhibit_all_warning = 
+cc_cmd_opt_instruction = 
+cc_cmd_opt_optimize = 2
+cc_cmd_opt_pointer_size = 
+cc_cmd_opt_profile_info = 
+cc_cmd_opt_stack_protector = 
+cc_cmd_opt_std = c++17
+cc_cmd_opt_syntax_only = 
+cc_cmd_opt_use_pipe = on
+cc_cmd_opt_warning_all = 
+cc_cmd_opt_warning_as_error = 
+cc_cmd_opt_warning_extra = 
+link_cmd_opt_no_console = 
+link_cmd_opt_no_link_stdlib = 
+link_cmd_opt_strip_exe = on
