@@ -2,6 +2,7 @@
 #include <vector>     // 明确包含vector
 #include <optional>   // 添加optional头文件
 #include <string_view>
+#include <set>
 using namespace std;
 
 //#define VK_USE_PLATFORM_WIN32_KHR
@@ -94,9 +95,12 @@ int main() {
 	GLFWwindow* window = nullptr;
 	VkInstance instance = VK_NULL_HANDLE;
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
+	
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;  // 在主函数作用域
 	VkDevice device = VK_NULL_HANDLE;  // 初始化为VK_NULL_HANDLE
 	VkQueue  graphicsQueue = VK_NULL_HANDLE;  // 初始化为VK_NULL_HANDLE
+	VkQueue  presentQueue = VK_NULL_HANDLE;
 	int result = 0; // 0=成功, 其他=错误阶段
 	
 	// 用 do-while(false) + break 实现分段跳转
@@ -107,7 +111,9 @@ int main() {
 			break;
 		}
 		
-		// 阶段 2: 创建窗口
+		// 阶段 2: 创建窗口 - 添加窗口提示，不要创建OpenGL上下文占据window
+		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );//关键：告诉 GLFW 不要创建 OpenGL 上下文
+		glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE);//可选：禁止调整大小
 		window = glfwCreateWindow(800, 600, "Vulkan", nullptr, nullptr);
 		if (!window) {
 			result = -2;
@@ -116,7 +122,7 @@ int main() {
 		
 		// 阶段 3: 检查 Validation Layers
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
-			result = -3;
+			result = -2;
 			break;
 		}
 		
@@ -130,7 +136,7 @@ int main() {
 		
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "Hello Triangle";
+		appInfo.pApplicationName = "Vulkan";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -162,7 +168,7 @@ int main() {
 		
 		// 阶段 5: 创建 Vulkan 实例
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-			result = -4;
+			result = -3;
 			break;
 		}
 		
@@ -180,17 +186,39 @@ int main() {
 			
 			if (CreateDebugUtilsMessengerEXT(instance, &debugCreateInfoActual, nullptr, &debugMessenger) != VK_SUCCESS) {
 				cout << "CreateDebugUtilsMessengerEXT: false" << endl; 
-				result = -5;
+				result = -4;
 				break;
 			}
 		}
-		
-		// 阶段 7：选择显卡，Pick Physical Device
+		//阶段 7：创建 Surface
+		VkResult surfaceResult = glfwCreateWindowSurface(instance, window, nullptr, &surface);
+		if( surfaceResult != VK_SUCCESS )
+		{
+			cout<<"failed to create window surface!";
+			switch (surfaceResult) {
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+				cout <<"VK_ERROR_OUT_OF_HOST_MEMORY"<<endl;
+				break;
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+				cout <<"VK_ERROR_OUT_OF_DEVICE_MEMORY"<<endl;
+				break;
+			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+				cout <<"VK_ERROR_NATIVE_WINDOW_IN_USE_KHR"<<endl;
+				break;
+			default:
+				cout << "Unknown error (" << surfaceResult << ")" << endl;
+				break;
+			}
+			result = -5;
+			break;
+		}
+		// 阶段 8：选择显卡，Pick Physical Device
+		// 注意图形队列和呈现队列可以是不同的队列族
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		cout << "vkEnumeratePhysicalDevices: " << deviceCount << endl; 
 		if (deviceCount == 0) {
-			result = -6;
+			result = -5;
 			break;
 		}
 		
@@ -198,19 +226,22 @@ int main() {
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 		
 		optional<uint32_t> graphicsQueueFamilyIndex;
-		
+		optional<uint32_t> presentQueueFamilyIndex;
+		vector<VkQueueFamilyProperties> queueFamilies{};
 		for (const auto& dev : devices) {  // 使用不同的变量名，避免遮蔽
+			//关键，防止选择了不同的dev中的familyIndex
+			graphicsQueueFamilyIndex.reset();
+			presentQueueFamilyIndex.reset();
+			
 			uint32_t queueFamilyCount = 0;
 			vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount, nullptr);
-			
 			cout << "GPU queue family count: " << queueFamilyCount << endl;
-			
 			if (queueFamilyCount == 0) {
 				continue;
 			}
 			
 			// ✅ 正确：使用 resize() 设置 vector 大小
-			vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+			queueFamilies.resize(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount, queueFamilies.data());
 			
 			// 查找支持图形队列的队列族
@@ -222,16 +253,31 @@ int main() {
 				<< "Has graphics: " 
 				<< boolalpha << static_cast<bool>(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 				<< endl;
-				
-				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				if ( queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 					graphicsQueueFamilyIndex = i;
-					break;  // 找到第一个支持图形的队列族
+					
+				}
+				
+				VkBool32 presentSupport = false;
+				vkGetPhysicalDeviceSurfaceSupportKHR(dev, i, surface,&presentSupport);
+				if(presentSupport )
+				{
+					presentQueueFamilyIndex = i;
+				}
+				
+				
+				if (graphicsQueueFamilyIndex.has_value() && presentQueueFamilyIndex.has_value() ) {
+					break;
 				}
 			}
 			
-			if (graphicsQueueFamilyIndex.has_value()) {
+			if (graphicsQueueFamilyIndex.has_value() && presentQueueFamilyIndex.has_value() ) {
 				cout << "Found suitable GPU with graphics queue family: " 
-				<< graphicsQueueFamilyIndex.value() << endl;
+				<< graphicsQueueFamilyIndex.value() 
+				<< endl
+				<< "Found suitable GPU with Present Queue Family:"
+				<< presentQueueFamilyIndex.value()
+				<< endl;
 				physicalDevice = dev;  // 赋值给外层变量
 				break;  // 找到合适的物理设备
 			}
@@ -240,29 +286,41 @@ int main() {
 		// 检查是否真的找到了物理设备
 		if (physicalDevice == VK_NULL_HANDLE) {
 			cout << "failed to find a suitable GPU!" << endl;
-			result = -7;
+			result = -5;
 			break;
 		}
 		
-		// 阶段 8：创建逻辑设备
-		if (!graphicsQueueFamilyIndex.has_value()) {
+		// 阶段 9：创建逻辑设备
+		if (!graphicsQueueFamilyIndex.has_value() ) {
 			cout << "No graphics queue family found!" << endl;
-			result = -8;
+			result = -5;
+			break;
+		}
+		if (!presentQueueFamilyIndex.has_value() ) {
+			cout << "No present queue family found!" << endl;
+			result = -5;
 			break;
 		}
 		
-		VkDeviceQueueCreateInfo queueCreateInfo{};
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex.value();
-		queueCreateInfo.queueCount = 1;
+		//创建带多个Graphics Queue和Present Queue的逻辑device
+		//注意两个queue的family可能是同一族的，所以要注意设置
+		vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		set<uint32_t> uniqueQueueFamilies = { presentQueueFamilyIndex.value(),graphicsQueueFamilyIndex.value()};
 		float queuePriority = 1.0f;
-		queueCreateInfo.pQueuePriorities = &queuePriority;
+		for( uint32_t queueFamily:uniqueQueueFamilies){
+			VkDeviceQueueCreateInfo queueCreateInfo{};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex.value();
+			queueCreateInfo.queueCount = 1;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
 		
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		VkDeviceCreateInfo deviceInfo{};
 		deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceInfo.pQueueCreateInfos = &queueCreateInfo;
-		deviceInfo.queueCreateInfoCount = 1;
+		deviceInfo.pQueueCreateInfos = queueCreateInfos.data();
+		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		deviceInfo.pEnabledFeatures = &deviceFeatures;
 		deviceInfo.enabledExtensionCount = 0;
 		
@@ -275,12 +333,12 @@ int main() {
 		
 		if (vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device) != VK_SUCCESS) {
 			cout << "failed to create logical device!" << endl;
-			result = -9; 
+			result = -6; 
 			break;
 		}
 		
 		vkGetDeviceQueue(device, graphicsQueueFamilyIndex.value(), 0, &graphicsQueue);
-		
+		vkGetDeviceQueue(device, presentQueueFamilyIndex.value(), 0, &presentQueue);
 		// 阶段 9: 主循环
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
@@ -290,32 +348,32 @@ int main() {
 	
 	// 统一资源清理（根据 result 判断需要清理哪些资源）
 	switch (result) {
-		case 0:  // 成功，清理所有资源
-		case -9:  // 清理逻辑设备
-		if (device != VK_NULL_HANDLE) {
-			vkDestroyDevice(device, nullptr);
+	case -6:// 清理逻辑设备
+		if (surface != VK_NULL_HANDLE) {
+			vkDestroyDevice( device, nullptr);
 		}
 		[[fallthrough]];  // 继续执行下一阶段清理
-	case -8:
-	case -7:
-		case -6:  // 清理 Debug Messenger
+	case -5: // 清理窗口的surface
+		if( surface != VK_NULL_HANDLE ){
+			vkDestroySurfaceKHR(instance, surface, nullptr);
+		}
+		[[fallthrough]];  // 继续执行下一阶段清理
+	case -4:  // 清理 Debug Messenger
 		if (enableValidationLayers && debugMessenger != VK_NULL_HANDLE) {
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 		[[fallthrough]];  // 继续执行下一阶段清理
-		case -5:  // 清理 Vulkan 实例
-	case -4:
+	case -3:
 		if (instance != VK_NULL_HANDLE) {
 			vkDestroyInstance(instance, nullptr);
 		}
 		[[fallthrough]];
-		case -3: 
-		case -2:  // 清理窗口
+	case -2:  // 清理窗口
 		if (window) {
 			glfwDestroyWindow(window);
 		}
 		[[fallthrough]];
-		case -1:  // 终止 GLFW
+	case -1:  // 终止 GLFW
 		glfwTerminate();
 		break;
 	}
