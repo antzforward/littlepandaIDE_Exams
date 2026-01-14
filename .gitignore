@@ -7,6 +7,7 @@
 *.o
 *.obj
 NUL
+*.spv
 
 # Precompiled Headers
 *.gch
@@ -37,6 +38,7 @@ NUL
 *.debug
 *.layout
 makefile.win
+*.res
 
 ## Tools
 Release/*

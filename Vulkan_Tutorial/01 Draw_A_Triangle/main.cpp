@@ -3,6 +3,8 @@
 #include <optional>   // 添加optional头文件
 #include <string_view>
 #include <set>
+#include <limits>
+#include <algorithm>
 using namespace std;
 
 //#define VK_USE_PLATFORM_WIN32_KHR
@@ -23,6 +25,13 @@ const bool enableValidationLayers = true;
  */
 const vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
+};
+/**
+ * @code VK_KHR_SWAPCHAIN_EXTENSION_NAME
+ * 需要检查的Device Extension Support
+ */
+const vector<const char*> deviceExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 VkDebugUtilsMessengerEXT debugMessenger;
@@ -101,6 +110,13 @@ int main() {
 	VkDevice device = VK_NULL_HANDLE;  // 初始化为VK_NULL_HANDLE
 	VkQueue  graphicsQueue = VK_NULL_HANDLE;  // 初始化为VK_NULL_HANDLE
 	VkQueue  presentQueue = VK_NULL_HANDLE;
+	
+	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
+	vector<VkImageView> swapChainImageViews;
+	vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+	
 	int result = 0; // 0=成功, 其他=错误阶段
 	
 	// 用 do-while(false) + break 实现分段跳转
@@ -136,7 +152,7 @@ int main() {
 		
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "Vulkan";
+		appInfo.pApplicationName = "Vulkan App";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -228,6 +244,7 @@ int main() {
 		optional<uint32_t> graphicsQueueFamilyIndex;
 		optional<uint32_t> presentQueueFamilyIndex;
 		vector<VkQueueFamilyProperties> queueFamilies{};
+		vector<VkExtensionProperties> availableExtensions{};
 		for (const auto& dev : devices) {  // 使用不同的变量名，避免遮蔽
 			//关键，防止选择了不同的dev中的familyIndex
 			graphicsQueueFamilyIndex.reset();
@@ -237,6 +254,24 @@ int main() {
 			vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount, nullptr);
 			cout << "GPU queue family count: " << queueFamilyCount << endl;
 			if (queueFamilyCount == 0) {
+				continue;
+			}
+			//检查dev 是否支持swap chain
+			uint32_t extensionCount =0;
+			vkEnumerateDeviceExtensionProperties(dev, nullptr,&extensionCount,nullptr);
+			availableExtensions.resize( extensionCount );
+			vkEnumerateDeviceExtensionProperties( dev, nullptr, &extensionCount, availableExtensions.data());
+			set<string_view> requiredExtensions( deviceExtensions.begin(), deviceExtensions.end());
+			for(const auto& extension:availableExtensions){
+				requiredExtensions.erase(string_view(extension.extensionName));
+			}
+			
+			if( !requiredExtensions.empty() ){
+				cout<<"the follow device extension is not support";
+				for(const auto& strz:requiredExtensions){
+					cout<< strz << " ";
+				}
+				cout<<endl;
 				continue;
 			}
 			
@@ -323,6 +358,8 @@ int main() {
 		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		deviceInfo.pEnabledFeatures = &deviceFeatures;
 		deviceInfo.enabledExtensionCount = 0;
+		deviceInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		
 		if (enableValidationLayers) {
 			deviceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -339,7 +376,123 @@ int main() {
 		
 		vkGetDeviceQueue(device, graphicsQueueFamilyIndex.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, presentQueueFamilyIndex.value(), 0, &presentQueue);
-		// 阶段 9: 主循环
+		// 阶段 10：Swap Chain
+		VkSurfaceCapabilitiesKHR surfaceCapabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice,surface,&surfaceCapabilities);
+		
+		uint32_t formatCount = 0;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+		vector<VkSurfaceFormatKHR> formats(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data());
+		
+		uint32_t presentModeCount;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+		vector<VkPresentModeKHR> presentModes(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
+		
+		VkSurfaceFormatKHR chosenSwapSurfaceFormat = formats[0];//default
+		for(int i=0;i<formats.size();i++){
+			if( formats[i].format == VK_FORMAT_R8G8B8A8_SRGB
+				&& formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR
+				)
+			{
+				chosenSwapSurfaceFormat = formats[i];
+				break;
+			}
+		}
+		VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+		for(int i=0;i<presentModes.size();i++){
+			if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR )
+			{
+				chosenPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+				break;
+			}
+		}
+		
+		VkExtent2D chosenExtent2D = surfaceCapabilities.currentExtent;
+		if( surfaceCapabilities.currentExtent.width == numeric_limits<uint32_t>::max())
+		{
+			int w,h;
+			glfwGetFramebufferSize(window, &w, &h);
+			chosenExtent2D.width = clamp( static_cast<uint32_t>(w), surfaceCapabilities.minImageExtent.width,surfaceCapabilities.maxImageExtent.width );
+			chosenExtent2D.height = clamp(static_cast<uint32_t>(h), surfaceCapabilities.minImageExtent.height,surfaceCapabilities.maxImageExtent.height );
+		}
+		
+		uint32_t imageCount = surfaceCapabilities.minImageCount + 1;//至少大于1个
+		if( surfaceCapabilities.maxImageCount >0 && imageCount>surfaceCapabilities.maxImageCount ){
+			imageCount = surfaceCapabilities.maxImageCount;
+		}
+		
+		VkSwapchainCreateInfoKHR swapChainInfo{};
+		swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapChainInfo.surface = surface;
+		
+		swapChainInfo.minImageCount = imageCount;
+		swapChainInfo.imageFormat = chosenSwapSurfaceFormat.format;
+		swapChainInfo.imageColorSpace = chosenSwapSurfaceFormat.colorSpace;
+		swapChainInfo.imageExtent = chosenExtent2D;
+		swapChainInfo.imageArrayLayers = 1;
+		swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		
+		uint32_t queueFamilyIndices[]={graphicsQueueFamilyIndex.value(),presentQueueFamilyIndex.value()};
+		//考虑当graphics family和present family不同的时候
+		if( graphicsQueueFamilyIndex.value() != presentQueueFamilyIndex.value() ){
+			swapChainInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;//并行模式
+			swapChainInfo.queueFamilyIndexCount = 2;
+			swapChainInfo.pQueueFamilyIndices = queueFamilyIndices;
+		}else{
+			swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+		
+		swapChainInfo.preTransform = surfaceCapabilities.currentTransform;
+		swapChainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapChainInfo.presentMode = chosenPresentMode;
+		swapChainInfo.clipped = VK_TRUE;
+		
+		swapChainInfo.oldSwapchain = VK_NULL_HANDLE;
+		
+		if( vkCreateSwapchainKHR(device, &swapChainInfo, nullptr, &swapChain) != VK_SUCCESS ){
+			cout<<"failed to create swap chain!"<<endl;
+			result = -7;
+			break;
+		}
+		
+		//阶段10：创建ImageView for SwapChain
+		vkGetSwapchainImagesKHR( device, swapChain, &imageCount,nullptr);
+		swapChainImages.resize( imageCount );
+		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+		swapChainImageFormat = chosenSwapSurfaceFormat.format;
+		swapChainExtent = chosenExtent2D;
+		
+		for(size_t i=0;i<swapChainImages.size();i++){
+			VkImageViewCreateInfo imageViewInfo{};
+			imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			imageViewInfo.image = swapChainImages[i];
+			imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			imageViewInfo.format = swapChainImageFormat;
+			imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageViewInfo.subresourceRange.baseMipLevel = 0;
+			imageViewInfo.subresourceRange.levelCount = 1;
+			imageViewInfo.subresourceRange.baseArrayLayer = 0;
+			imageViewInfo.subresourceRange.layerCount = 1;
+			VkImageView imageView = VK_NULL_HANDLE;
+			if(vkCreateImageView(device,&imageViewInfo,nullptr, &imageView) != VK_SUCCESS){
+				cout<<"failed to create image views!"<<endl;
+				result = -8;
+				break;
+			}
+			swapChainImageViews.push_back(imageView );
+			
+		}
+		if( swapChainImageViews.size()!= swapChainImages.size()){
+			result = -8;
+			break;
+		}
+		// 阶段 Loop: 主循环
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
 		}
@@ -348,6 +501,16 @@ int main() {
 	
 	// 统一资源清理（根据 result 判断需要清理哪些资源）
 	switch (result) {
+	case -8:
+		for(size_t i=0;i<swapChainImageViews.size();i++){
+			vkDestroyImageView(device, swapChainImageViews[i],nullptr);
+		}
+		swapChainImageViews.clear();
+	case -7://清理swapchain
+		if( swapChain != VK_NULL_HANDLE ){
+			vkDestroySwapchainKHR(device, swapChain,nullptr);
+		}
+		[[fallthrough]];  // 继续执行下一阶段清理
 	case -6:// 清理逻辑设备
 		if (surface != VK_NULL_HANDLE) {
 			vkDestroyDevice( device, nullptr);

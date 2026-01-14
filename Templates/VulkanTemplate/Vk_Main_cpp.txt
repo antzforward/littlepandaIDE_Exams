@@ -1,0 +1,30 @@
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+int main() {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan Template", nullptr, nullptr);
+	
+	// 初始化 Vulkan
+    VkInstance instance;
+    VkInstanceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    
+    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
+    }
+
+    // 主循环
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+    }
+
+    // 清理资源
+    vkDestroyInstance(instance, nullptr);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
+}

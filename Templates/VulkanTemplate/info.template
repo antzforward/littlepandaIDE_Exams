@@ -1,0 +1,29 @@
+[Template]
+ver=2
+Name=Vulkan Application
+Name[zh_CN]=Vulkan
+Icon=vulkan-logo.ico
+Description=A simple program using Vulkan API
+Description[zh_CN]=一个使用VulkanAPI的简单程序
+Category=3D
+Category[zh_CN]=3D
+
+[Unit0]
+CPPName=main.cpp
+CName=main.cpp
+C=Vk_Main_cpp.txt
+CPP=Vk_Main_cpp.txt
+
+[Project]
+UnitCount=1
+Type=1
+IsCpp=1
+linker=-lvulkan-1 -lglfw3 -lglew32 -lwinmm -lgdi32
+Encoding = UTF-8
+UseUTF8 = 1
+
+[CompilerSettings]
+cc_cmd_opt_optimize = 2
+cc_cmd_opt_std = c++17
+cc_cmd_opt_use_pipe = on
+link_cmd_opt_strip_exe = on
