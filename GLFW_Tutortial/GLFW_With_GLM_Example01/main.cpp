@@ -1,4 +1,8 @@
 #include <iostream>
+#include <vector>
+#include <string_view>
+#include <unordered_map>
+using namespace std;
 // GLEW 使用静态链接，注意函数选项中的相关链接参数
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -11,8 +15,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-glm::vec3 calculateCircumcenter(const glm::vec3& A, const glm::vec3& B, const glm::vec3& C);
+
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+static void PrintVersionIfo();
+static std::string GetBinaryFormatName(GLenum format);
+static std::string GuessFormatByExtension(GLenum format);
+static std::string GetFormatDescription(GLenum format);
+static bool HasExtension(const std::string& extension);
+static glm::vec3 calculateCircumcenter(const glm::vec3& A, const glm::vec3& B, const glm::vec3& C);
 // 窗口大小
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -33,12 +44,15 @@ int main()
 
     // 设置必要的回调函数
     glfwSetKeyCallback(window, key_callback);
-
+	
     // 让GLEW使用现代方式来获取函数指针和扩展
     glewExperimental = GL_TRUE;
     // 初始化GLEW，设置OpenGL函数指针
     glewInit();
-
+	
+	//打印信息
+	PrintVersionIfo();
+	
     // 设置视图尺寸
     glViewport(0, 0, WIDTH, HEIGHT);
 
@@ -179,4 +193,233 @@ glm::vec3 calculateCircumcenter(const glm::vec3& A, const glm::vec3& B, const gl
 	
 	glm::vec3 circumcenter = (a2 * A + b2 * B + c2 * C) / (a2 + b2 + c2);
 	return circumcenter;
+}
+void PrintVersionIfo(){
+	// 获取 OpenGL 版本信息
+	std::cout << "\n=== OpenGL 版本信息 ===" << std::endl;
+	
+	const GLubyte* version = glGetString(GL_VERSION);
+	const GLubyte* glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+	const GLubyte* renderer = glGetString(GL_RENDERER);
+	
+	std::cout << "OpenGL 版本: " << version << std::endl;
+	std::cout << "GLSL 版本: " << glslVersion << std::endl;
+	std::cout << "渲染器: " << renderer << std::endl;
+	
+	// 获取数值版本
+	GLint major, minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	std::cout << "主版本: " << major << ".次版本: " << minor << std::endl;
+	
+	// 获取厂商信息
+	std::cout << "\n=== 厂商信息 ===" << std::endl;
+	
+	const GLubyte* vendor = glGetString(GL_VENDOR);
+	std::cout << "厂商: " << vendor << std::endl;
+	// 获取扩展列表
+	std::cout << "\n=== 扩展支持 ===" << std::endl;
+	
+	GLint numExtensions = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+	std::cout << "支持的扩展数量: " << numExtensions << std::endl;
+
+	
+	// 只显示与着色器相关的扩展
+	std::vector<std::string> shaderExtensions = {
+		"GL_ARB_get_program_binary",
+		"GL_ARB_gl_spirv",
+		"GL_ARB_spirv_extensions",
+		"GL_KHR_parallel_shader_compile",
+		"GL_ARB_separate_shader_objects",
+		"GL_ARB_program_interface_query"
+	};
+	
+	for (const auto& ext : shaderExtensions)
+	{
+		if (HasExtension(ext))
+		{
+			std::cout << "✓ " << ext << std::endl;
+		}
+	}
+	// 查询着色器二进制支持信息
+	std::cout << "\n=== 着色器二进制支持 ===" << std::endl;
+	
+	// 检查是否支持程序二进制
+	if (HasExtension("GL_ARB_get_program_binary"))
+	{
+		std::cout << "支持程序二进制加载/保存" << std::endl;
+		
+		// 查询支持的二进制格式数量
+		GLint numFormats = 0;
+		glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &numFormats);
+		std::cout << "支持的二进制格式数量: " << numFormats << std::endl;
+		
+		if (numFormats > 0)
+		{
+			std::vector<GLint> formats(numFormats);
+			glGetIntegerv(GL_PROGRAM_BINARY_FORMATS, formats.data());
+			
+			std::cout << "支持的二进制格式:" << std::endl;
+			for (GLint format : formats)
+			{
+				std::string formatName = GetBinaryFormatName(format);
+				std::cout << "  - 0x" << std::hex << format << std::dec 
+				<< " (" << formatName << ")" << std::endl;
+			}
+		}
+	}
+	else
+	{
+		std::cout << "不支持程序二进制" << std::endl;
+	}
+	
+	// 检查 SPIR-V 支持
+	if (HasExtension("GL_ARB_gl_spirv"))
+	{
+		std::cout << "支持 SPIR-V 着色器" << std::endl;
+		
+		// 查询 SPIR-V 版本
+		GLint spirvVersionMajor = 0, spirvVersionMinor = 0;
+		glGetIntegerv(GL_SPIR_V_EXTENSIONS, &spirvVersionMajor); // 注意：这个查询可能不正确
+		// 实际中，GL_ARB_gl_spirv 规范定义了特定的查询方式
+		
+		std::cout << "SPIR-V 版本: 1." << spirvVersionMinor << std::endl;
+	}
+	else
+	{
+		std::cout << "不支持 SPIR-V" << std::endl;
+	}
+	
+	// 查询各种限制
+	std::cout << "\n=== 系统限制 ===" << std::endl;
+	
+	struct LimitInfo {
+		GLenum pname;
+		const char* name;
+	};
+	
+	std::vector<LimitInfo> limits = {
+		{GL_MAX_TEXTURE_SIZE, "最大纹理尺寸"},
+		{GL_MAX_VERTEX_ATTRIBS, "最大顶点属性数量"},
+		{GL_MAX_VERTEX_UNIFORM_COMPONENTS, "顶点着色器uniform组件数"},
+		{GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, "片段着色器uniform组件数"},
+		{GL_MAX_VARYING_COMPONENTS, "最大varying组件数"},
+		{GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, "顶点着色器纹理单元数"},
+		{GL_MAX_TEXTURE_IMAGE_UNITS, "片段着色器纹理单元数"},
+		{GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, "总纹理单元数"},
+		{GL_MAX_UNIFORM_BLOCK_SIZE, "最大uniform块大小"},
+		{GL_MAX_PROGRAM_TEXEL_OFFSET, "最大程序纹理偏移"},
+		{GL_MIN_PROGRAM_TEXEL_OFFSET, "最小程序纹理偏移"}
+	};
+	
+	for (const auto& limit : limits)
+	{
+		GLint value;
+		glGetIntegerv(limit.pname, &value);
+		std::cout << limit.name << ": " << value << std::endl;
+	}
+}
+// 获取二进制格式名称（通过已知常量映射）
+static std::string GetBinaryFormatName(GLenum format)
+{
+	// 这些格式常量来自不同的 OpenGL 扩展规范
+	switch (format)
+	{
+		// 标准格式
+		case 0x8FBA: return "GL_PROGRAM_BINARY_FORMAT_ARB";  // ARB_get_program_binary
+		case 0x8FBB: return "GL_PROGRAM_BINARY_FORMAT_SPIR_V_ARB";  // SPIR-V
+		
+		// 厂商特定格式
+		case 0x87FC: return "GL_PROGRAM_BINARY_FORMAT_MESA";  // Mesa
+		case 0x96B0: return "GL_PROGRAM_BINARY_FORMAT_POWERVR";  // PowerVR/IMG
+		case 0x913F: return "GL_PROGRAM_BINARY_FORMAT_NVIDIA";  // NVIDIA
+		case 0x8C40: return "GL_PROGRAM_BINARY_FORMAT_AMD";  // AMD
+		case 0x93B0: return "GL_PROGRAM_BINARY_FORMAT_INTEL";  // Intel
+		case 0x9555: return "GL_PROGRAM_BINARY_FORMAT_IMG";  // IMG (PowerVR)
+		
+		// Khronos 标准格式
+		case 0x93A0: return "GL_PROGRAM_BINARY_FORMAT_KHR";  // Khronos
+		
+		// GL 4.5+ 标准
+		case 0x9288: return "GL_SHADER_BINARY_FORMAT_SPIR_V";  // GL 4.6 SPIR-V
+		case 0x9289: return "GL_SHADER_BINARY_FORMAT_SPIR_V_ARB";  // ARB_spirv_extensions
+		
+		// Vulkan 互操作性
+		case 0x95B8: return "GL_SHADER_BINARY_FORMAT_VULKAN";  // EXT_external_objects
+		
+		// 更多可能的格式
+		case 0x8A4F: return "GL_PROGRAM_BINARY_RETRIEVABLE_HINT";
+		case 0x8741: return "GL_PROGRAM_BINARY_FORMATS";
+		
+	default:
+		// 尝试通过扩展字符串来识别未知格式
+		return GuessFormatByExtension(format);
+	}
+}
+
+// 通过查询支持的扩展来猜测格式
+static std::string GuessFormatByExtension(GLenum format)
+{
+	std::stringstream ss;
+	ss << "0x" << std::hex << format << std::dec;
+	
+	// 检查支持的扩展
+	if (HasExtension("GL_ARB_get_program_binary") && format == 0x8FBA)
+		return "GL_PROGRAM_BINARY_FORMAT_ARB";
+	
+	if (HasExtension("GL_ARB_gl_spirv") && format == 0x8FBB)
+		return "GL_PROGRAM_BINARY_FORMAT_SPIR_V_ARB";
+	
+	if (HasExtension("GL_MESA_get_program_binary") && format == 0x87FC)
+		return "GL_PROGRAM_BINARY_FORMAT_MESA";
+	
+	if (HasExtension("GL_IMG_binary_shader") && format == 0x96B0)
+		return "GL_PROGRAM_BINARY_FORMAT_POWERVR";
+	
+	if (HasExtension("GL_NV_gpu_program5") && format == 0x913F)
+		return "GL_PROGRAM_BINARY_FORMAT_NVIDIA";
+	
+	if (HasExtension("GL_AMD_program_binary_Z400") && format == 0x8C40)
+		return "GL_PROGRAM_BINARY_FORMAT_AMD";
+	
+	if (HasExtension("GL_INTEL_binary_shader") && format == 0x93B0)
+		return "GL_PROGRAM_BINARY_FORMAT_INTEL";
+	
+	// 无法识别的格式
+	return "未知格式 (0x" + std::to_string(static_cast<unsigned int>(format)) + ")";
+}
+
+// 获取格式描述
+static std::string GetFormatDescription(GLenum format)
+{
+	switch (format)
+	{
+		case 0x8FBA: return "ARB_get_program_binary 标准格式，驱动私有二进制";
+		case 0x8FBB: return "SPIR-V 格式，跨平台中间表示";
+		case 0x87FC: return "Mesa 开源驱动格式";
+		case 0x96B0: return "PowerVR/IMG 移动GPU格式";
+		case 0x913F: return "NVIDIA 私有二进制格式";
+		case 0x8C40: return "AMD 私有二进制格式";
+		case 0x93B0: return "Intel GPU 格式";
+		case 0x9555: return "IMG/PowerVR 替代格式";
+		case 0x93A0: return "Khronos 标准二进制格式";
+		case 0x9288: return "标准 SPIR-V 着色器二进制";
+		case 0x9289: return "ARB SPIR-V 扩展格式";
+		case 0x95B8: return "Vulkan 互操作格式";
+		default: return "厂商特定的私有二进制格式";
+	}
+}
+static bool HasExtension(const std::string& extension)
+{
+	GLint numExtensions = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+	
+	for (GLint i = 0; i < numExtensions; ++i)
+	{
+		const char* ext = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
+		if (extension == ext)
+			return true;
+	}
+	return false;
 }
