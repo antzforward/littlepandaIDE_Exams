@@ -40,7 +40,7 @@ VkDebugUtilsMessengerEXT debugMessenger;
  * @brief 检查是否支持 Validation Layers
  * @return 如果所有需要的 Layers 都存在，返回 true；否则返回 false
  */
-bool checkValidationLayerSupport() {
+bool checkValidationLayerSupport()noexcept {
 	uint32_t layerCount = 0;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 	
