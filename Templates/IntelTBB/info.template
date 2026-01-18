@@ -1,0 +1,19 @@
+[Template]
+ver=1
+Name=IntelTBB
+Icon=IntelTBB.png
+Description=A Example About TBB for multicore processors.
+Description[zh_CN]=一个TBB多核进程示例
+Category=Console
+Category[zh_CN]=控制台
+
+[Unit0]
+CppName=main.cpp
+Cpp=TBB_cpp.txt
+
+[Project]
+UnitCount=1
+Type=0
+IsCPP=1
+CppCompiler=-std=c++17
+Linker=-llibtbb
