@@ -3,7 +3,7 @@
 in vec3 Color;
 out vec4 FragColor;
 
-uniform vec3 wireColor = vec3(1.0, 1.0, 1.0);  // 白色色边框
+uniform vec3 wireColor;  // 边框颜色
 
 void main()
 {

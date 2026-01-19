@@ -114,8 +114,12 @@ int main()
 	// 获取uniform的位置
 	auto fillMvpLoc = glGetUniformLocation(fillShader.Program, "mvp");
 	auto wireMvpLoc = glGetUniformLocation(wireframeShader.Program, "mvp");
-	
-	
+	auto wireColorLoc = glGetUniformLocation(wireframeShader.Program, "wireColor"); 
+	//可以提前设置，也可以在loop里面设置，静态变量就设置一次好了。
+	wireframeShader.Use();
+	if( wireColorLoc != GL_INVALID_INDEX ){
+		glUniform3f(wireColorLoc,1.0f,1.0f,1.0f);
+	}
     // 游戏主循环
     while (!glfwWindowShouldClose(window))
     {
@@ -145,7 +149,9 @@ int main()
 		
 		// ********** 绘制原始三角形的边框 **********
 		wireframeShader.Use();
-		
+//		if( wireColorLoc != -1 ){
+//			glUniform3f(wireColorLoc,1.0f,1.0f,1.0f);
+//		}
 		// 原始三角形的模型矩阵（不旋转）
 		glm::mat4 wireModel = glm::mat4(1.0f);
 		glm::mat4 wireMvp = projection * view * wireModel;
