@@ -25,7 +25,7 @@ static std::string GetFormatDescription(GLenum format);
 static bool HasExtension(const std::string& extension);
 static glm::vec3 calculateCircumcenter(const glm::vec3& A, const glm::vec3& B, const glm::vec3& C);
 // 窗口大小
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1024, HEIGHT = 1024;
 
 // main函数，程序从这里开始执行
 int main()
@@ -57,26 +57,50 @@ int main()
     glViewport(0, 0, WIDTH, HEIGHT);
 
     // 创建两个着色器程序：一个用于填充三角形，一个用于线框
-	Shader fillShader("shader.vs", "shader.fs");
-	Shader wireframeShader("shader.vs", "shader_wireframe.fs");
+	// Shader::CreateFromSpirV("shadertoyvs.spv","shadertoyps.spv");
+	// Shader::CreateFromGlslFile("shader.vs", "shader.fs");
+	Shader fillShader= Shader::CreateFromGlslFile("shader.vs", "shader.fs");
+	Shader wireframeShader=Shader::CreateFromGlslFile("shader.vs", "shader_wireframe.fs");
 
 
     // 一维数组，每六个代表一个顶点属性，前三个代表位置属性，后三个代表颜色属性
-    GLfloat vertices[] = {
-        // Positions         // Colors
-        -1.0f, -1.0f, 0.0f,   1.0f, 0.0f, 0.0f,  // Bottom Right
-         0.0f,  1.0f, 0.0f,   0.0f, 1.0f, 0.0f,  // Bottom Left
-        1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 1.0f   // Top 
-    };
-    GLuint VBO, VAO;//声明顶点缓冲，声明顶点数组用于管理顶点数据
+   GLfloat vertices[] = {
+	   // 位置              // 颜色
+	   -0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // 左上
+		0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // 右上
+	    0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // 右下
+	   -0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 0.0f   // 左下
+   };
+	
+	// 所有索引（填充6个 + 边框8个）
+	GLuint allIndices[] = {
+		// 填充部分
+		0, 1, 2,  // 第一个三角形
+		0, 2, 3,  // 第二个三角形
+		
+		// 边框部分
+		0, 1,     // 上边
+		1, 2,     // 右边
+		2, 3,     // 下边
+		3, 0      // 左边
+	};
+	
+    GLuint VBO, VAO, EBO;//声明顶点缓冲，声明顶点数组用于管理顶点数据
+	
     glGenVertexArrays(1, &VAO);//创建顶点数组，返回一个独一无二的整数，标识数组
     glGenBuffers(1, &VBO);//创建顶点缓冲，返回一个独一无二的整数，标识缓冲区
+	glGenBuffers(1, &EBO);  // 填充索引用的EBO
     
     glBindVertexArray(VAO);//绑定顶点数组
     glBindBuffer(GL_ARRAY_BUFFER, VBO);//绑定顶点缓冲
 	//指定顶点数组的数据源为vertices，第四个参数代表显卡如何管理给定的数据，GL_STATIC_DRWA代表几乎不会改变
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+	
+	// 设置填充索引缓冲
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(allIndices), allIndices, GL_STATIC_DRAW);
+	
+	
     // 指定顶点属性的解析方式。即，如何从顶点缓冲获取相应的顶点属性和相应的颜色属性。或者说，顶点着色器中如何知道去哪个顶点属性分量重着色呢
 	//对每一个顶点而言，属性有2种，一是位置属性，而是颜色属性，因此每六个浮点数决定了一个顶点的位置和颜色
 
@@ -105,16 +129,16 @@ int main()
 	glm::vec3 C(vertices[offset+0],vertices[offset+1],vertices[offset+2]);
 	glm::vec3 circumcenter = calculateCircumcenter(A, B, C);
 	// 视图矩阵：假设摄像机在原点，看向z轴负方向，上向量为y轴
-	glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f,  4.0f), 
+	glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f,  2.0f), 
 								 glm::vec3(0.0f, 0.0f, 0.0f), 
 								 glm::vec3(0.0f, 1.0f, 0.0f));
 	// 投影矩阵：透视投影
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)WIDTH/HEIGHT, 0.1f, 100.0f);
 	
 	// 获取uniform的位置
-	auto fillMvpLoc = glGetUniformLocation(fillShader.Program, "mvp");
-	auto wireMvpLoc = glGetUniformLocation(wireframeShader.Program, "mvp");
-	auto wireColorLoc = glGetUniformLocation(wireframeShader.Program, "wireColor"); 
+	auto fillMvpLoc = fillShader.GetUniformLocation("mvp");
+	auto wireMvpLoc = wireframeShader.GetUniformLocation( "mvp");
+	auto wireColorLoc = wireframeShader.GetUniformLocation("wireColor"); 
 	//可以提前设置，也可以在loop里面设置，静态变量就设置一次好了。
 	wireframeShader.Use();
 	if( wireColorLoc != GL_INVALID_INDEX ){
@@ -145,13 +169,11 @@ int main()
 		glUniformMatrix4fv(fillMvpLoc, 1, GL_FALSE, glm::value_ptr(fillMvp));
 		
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);  // 绑定填充索引
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
 		// ********** 绘制原始三角形的边框 **********
 		wireframeShader.Use();
-//		if( wireColorLoc != -1 ){
-//			glUniform3f(wireColorLoc,1.0f,1.0f,1.0f);
-//		}
 		// 原始三角形的模型矩阵（不旋转）
 		glm::mat4 wireModel = glm::mat4(1.0f);
 		glm::mat4 wireMvp = projection * view * wireModel;
@@ -161,7 +183,8 @@ int main()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glLineWidth(3.0f);  // 设置线宽
 		
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		// 切换为边框索引
+		glDrawElements(GL_LINES, 8, GL_UNSIGNED_INT, (void*)(6 * sizeof(GLuint)));  // 绘制8个顶点（4条线）
 		
 		// 恢复填充模式
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -172,6 +195,8 @@ int main()
     // 正确释放所有不再需要的资源
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);  // 删除索引缓冲
+	Shader::UseNone();
     // 终止GLFW，清理所有GLFW使用的资源
     glfwTerminate();
     return 0;

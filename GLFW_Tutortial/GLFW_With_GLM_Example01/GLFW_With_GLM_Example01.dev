@@ -1,7 +1,7 @@
 [Project]
 filename = GLFW_With_GLM_Example01.dev
 name = GLFW_With_GLM_Example01
-UnitCount = 5
+UnitCount = 7
 Type = 1
 Ver = 3
 Includes = 
@@ -44,7 +44,7 @@ UseUTF8 = 1
 
 
 [Unit1]
-FileName = shader.vs
+FileName = shader_wireframe.fs
 Folder = 其他文件
 Compile = 0
 Link = 0
@@ -53,12 +53,12 @@ OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
 RealEncoding = UTF-8
-CompileCpp = 1
+CompileCpp = 0
 
 
 [Unit2]
-FileName = shader.h
-Folder = 头文件
+FileName = shader.fs
+Folder = 其他文件
 Compile = 0
 Link = 0
 Priority = 1000
@@ -70,11 +70,11 @@ CompileCpp = 0
 
 
 [Unit3]
-FileName = main.cpp
+FileName = shader.vs
 CompileCpp = 1
-Folder = 源文件
-Compile = 1
-Link = 1
+Folder = 其他文件
+Compile = 0
+Link = 0
 Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
@@ -83,16 +83,16 @@ RealEncoding = UTF-8
 
 
 [Unit4]
-FileName = shader.fs
+FileName = shader.h
 CompileCpp = 0
-Folder = 其他文件
+Folder = 头文件
 Compile = 0
 Link = 0
 Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = ASCII
+RealEncoding = UTF-8
 
 
 [VersionInfo]
@@ -116,7 +116,7 @@ SyncProduct = 1
 
 
 [Unit5]
-FileName = shader_wireframe.fs
+FileName = shadertoyps.spv
 CompileCpp = 0
 Folder = 其他文件
 Compile = 0
@@ -125,7 +125,32 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
+RealEncoding = 
+
+
+[Unit6]
+FileName = main.cpp
+CompileCpp = 1
+Folder = 源文件
+Compile = 1
+Link = 1
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
 RealEncoding = UTF-8
+
+
+[Unit7]
+FileName = shadertoyvs.spv
+Folder = 其他文件
+Compile = 0
+Link = 0
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
+RealEncoding = 
 
 
 [CompilerSettings]
