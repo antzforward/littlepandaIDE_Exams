@@ -44,7 +44,7 @@ UseUTF8 = 1
 
 
 [Unit1]
-FileName = shader_wireframe.fs
+FileName = shader.vs
 Folder = 其他文件
 Compile = 0
 Link = 0
@@ -66,11 +66,11 @@ OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
 RealEncoding = ASCII
-CompileCpp = 0
+CompileCpp = 1
 
 
 [Unit3]
-FileName = shader.vs
+FileName = EyePS.spv
 CompileCpp = 1
 Folder = 其他文件
 Compile = 0
@@ -79,12 +79,12 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = UTF-8
+RealEncoding = ASCII
 
 
 [Unit4]
-FileName = EyeVS.vert
-CompileCpp = 0
+FileName = EyePS.frag
+CompileCpp = 1
 Folder = 其他文件
 Compile = 0
 Link = 0
@@ -92,7 +92,7 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = 
+RealEncoding = ASCII
 
 
 [VersionInfo]
@@ -116,7 +116,7 @@ SyncProduct = 1
 
 
 [Unit5]
-FileName = EyePS.spv
+FileName = EyeVS.vert
 CompileCpp = 0
 Folder = 其他文件
 Compile = 0
@@ -125,37 +125,12 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = 
+RealEncoding = ASCII
 
 
 [Unit6]
-FileName = shader.h
-CompileCpp = 0
-Folder = 头文件
-Compile = 0
-Link = 0
-Priority = 1000
-OverrideBuildCmd = 0
-BuildCmd = 
-FileEncoding = PROJECT
-RealEncoding = UTF-8
-
-
-[Unit7]
-FileName = EyeVS.spv
-Folder = 其他文件
-Compile = 0
-Link = 0
-Priority = 1000
-OverrideBuildCmd = 0
-BuildCmd = 
-FileEncoding = PROJECT
-RealEncoding = 
-CompileCpp = 1
-
-
-[Unit8]
 FileName = main.cpp
+CompileCpp = 1
 Folder = 源文件
 Compile = 1
 Link = 1
@@ -164,11 +139,10 @@ OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
 RealEncoding = UTF-8
-CompileCpp = 1
 
 
-[Unit9]
-FileName = EyePS.frag
+[Unit7]
+FileName = shader_wireframe.fs
 Folder = 其他文件
 Compile = 0
 Link = 0
@@ -176,7 +150,33 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = 
+RealEncoding = UTF-8
+CompileCpp = 1
+
+
+[Unit8]
+FileName = shader.h
+Folder = 头文件
+Compile = 0
+Link = 0
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
+RealEncoding = UTF-8
+CompileCpp = 0
+
+
+[Unit9]
+FileName = EyeVS.spv
+Folder = 其他文件
+Compile = 0
+Link = 0
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
+RealEncoding = ASCII
 
 
 [Unit10]

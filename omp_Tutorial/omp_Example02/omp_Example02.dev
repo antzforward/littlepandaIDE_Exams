@@ -1,6 +1,6 @@
 [Project]
-filename = 08VulkanDemo.dev
-name = 08VulkanDemo
+filename = omp_Example02.dev
+name = omp_Example02
 UnitCount = 1
 Type = 1
 Ver = 3
@@ -9,10 +9,10 @@ Libs =
 Bins = 
 ResourceIncludes = 
 MakeIncludes = 
-PrivateResource = 08VulkanDemo_private.rc
+PrivateResource = omp_Example02_private.rc
 Compiler = 
 CppCompiler = 
-Linker = -lvulkan-1 -lglfw3 -lglew32 -lwinmm -lgdi32
+Linker = 
 ResourceCommand = 
 IsCpp = 1
 Icon = app.ico
@@ -53,7 +53,7 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = UTF-8
+RealEncoding = ASCII
 
 
 [VersionInfo]
@@ -64,20 +64,26 @@ Build = 0
 LanguageID = 1033
 CharsetID = 1252
 CompanyName = 
-FileVersion = 0.1
+FileVersion = 
 FileDescription = Developed using the Red Panda C++ IDE
 InternalName = 
 LegalCopyright = 
 LegalTrademarks = 
-OriginalFilename = 08VulkanDemo.exe
-ProductName = 08VulkanDemo
-ProductVersion = 0.1.1.1
+OriginalFilename = 
+ProductName = 
+ProductVersion = 
 AutoIncBuildNr = 0
 SyncProduct = 1
 
 
 [CompilerSettings]
+c_cmd_opt_std = 
+cc_cmd_opt_no_ms_extensions = on
 cc_cmd_opt_optimize = 2
-cc_cmd_opt_std = c++17
+cc_cmd_opt_std = 
 cc_cmd_opt_use_pipe = on
+cc_opt_error_implicit_int = on
+cc_opt_error_return_type = on
+cc_opt_error_vla = on
+link_cmd_opt_stack_size = 12
 link_cmd_opt_strip_exe = on

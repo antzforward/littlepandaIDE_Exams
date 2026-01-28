@@ -58,9 +58,10 @@ int main()
 
     // 创建两个着色器程序：一个用于填充三角形，一个用于线框
 	// Shader::CreateFromSpirV("EyeVS.spv","EyePS.spv");
+	// Shader::CreateFromSpirV("iconVS.spv","ICONFrag.spv");//对应的uniform 读取设置关联性不大 不好处理
 	// Shader::CreateFromGlslFile("shader.vs", "shader.fs");
 	// Shader::CreateFromGlslFile("EyeVS.vert", "EyePS.frag");
-	Shader fillShader= Shader::CreateFromGlslFile("EyeVS.vert", "EyePS.frag");
+	Shader fillShader= Shader::CreateFromSpirV("EyeVS.spv","EyePS.spv");
 	Shader wireframeShader=Shader::CreateFromGlslFile("shader.vs", "shader_wireframe.fs");
 
 
@@ -188,27 +189,42 @@ int main()
 		fillShader.Use();
 		fillShader.SetShaderToyUniforms(current_time,delta_time,
 										frame,resolution,mouse);
-		// 计算旋转模型矩阵
-		glm::mat4 fillModel = glm::mat4(1.0f);
-		fillModel = glm::translate(fillModel, circumcenter);      // 平移到原点
-		fillModel = glm::rotate(fillModel, current_time, glm::vec3(0.0f, 0.0f, 1.0f));  // 旋转
-		fillModel = glm::translate(fillModel, -circumcenter);     // 平移回原位
-		
-		glm::mat4 fillMvp = projection * view * fillModel;
-		fillShader.SetUniform(fillMvpLoc,fillMvp);
-		
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);  // 绑定填充索引
+		
+		// 计算旋转模型矩阵
+		//左下
+		glm::mat4 fillModel = glm::mat4(1.0f);
+		fillModel = glm::translate(fillModel, glm::vec3(-.5f, -.5f, 1.0f));     
+		
+		glm::mat4 fillMvp = projection * view * fillModel;
+		fillShader.SetUniform(fillMvpLoc,fillMvp);		
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
-		// 平移一段距离在绘制一次
+		//左上
 		fillModel = glm::mat4(1.0f);
-		fillModel = glm::rotate(fillModel, current_time, glm::vec3(0.0f, 0.0f, 1.0f));  // 旋转
-		fillModel = glm::translate(fillModel, glm::vec3(0.5f, 0.5f, 0.0f)); 
+		fillModel = glm::translate(fillModel, glm::vec3(-.5f, 0.0f, 1.0f));     
+		
 		fillMvp = projection * view * fillModel;
 		fillShader.SetUniform(fillMvpLoc,fillMvp);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
+		//右下
+		fillModel = glm::mat4(1.0f);
+		fillModel = glm::translate(fillModel, glm::vec3(0.0f, -.5f, 1.0f));     
+		
+		fillMvp = projection * view * fillModel;
+		fillShader.SetUniform(fillMvpLoc,fillMvp);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		
+		//右上
+		fillModel = glm::mat4(1.0f);
+		fillModel = glm::translate(fillModel, glm::vec3(0.0f, 0.0f, 1.0f));     
+		
+		fillMvp = projection * view * fillModel;
+		fillShader.SetUniform(fillMvpLoc,fillMvp);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 		// ********** 绘制原始三角形的边框 **********
 		wireframeShader.Use();
 		wireframeShader.SetShaderToyUniforms(current_time,delta_time,
@@ -221,6 +237,8 @@ int main()
 		// 设置线框模式和线宽
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glLineWidth(3.0f);  // 设置线宽
+		// 设置颜色
+		wireframeShader.SetUniform(wireColorLoc,0.0f,0.0f,0.0f);
 		
 		// 切换为边框索引
 		glDrawElements(GL_LINES, 8, GL_UNSIGNED_INT, (void*)(6 * sizeof(GLuint)));  // 绘制8个顶点（4条线）

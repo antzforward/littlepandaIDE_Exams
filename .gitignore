@@ -39,6 +39,11 @@ NUL
 makefile.win
 *.res
 
+# zip files
+*.zip
+*.7z
+*.rar
+
 ## Tools
 Release/*
 fd.exe
