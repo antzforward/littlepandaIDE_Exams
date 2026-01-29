@@ -58,10 +58,10 @@ int main()
 
     // 创建两个着色器程序：一个用于填充三角形，一个用于线框
 	// Shader::CreateFromSpirV("EyeVS.spv","EyePS.spv");
-	// Shader::CreateFromSpirV("iconVS.spv","ICONFrag.spv");//对应的uniform 读取设置关联性不大 不好处理
+	// Shader::CreateFromSpirV("icon.vert.spv","icon.frag.spv");
 	// Shader::CreateFromGlslFile("shader.vs", "shader.fs");
 	// Shader::CreateFromGlslFile("EyeVS.vert", "EyePS.frag");
-	Shader fillShader= Shader::CreateFromSpirV("EyeVS.spv","EyePS.spv");
+	Shader fillShader= Shader::CreateFromSpirV("icon.vert.spv","icon.frag.spv");
 	Shader wireframeShader=Shader::CreateFromGlslFile("shader.vs", "shader_wireframe.fs");
 
 

@@ -5,8 +5,8 @@
 同样 hlsl也相同
 #### 1. 编译glsl shader
 后缀表示shader类型。
-glslangValidator.exe -V shader.vert
-glslangValidator.exe -V shader.frag
+glslangValidator -V --target-env opengl icon.vert.glsl
+glslangValidator -V --target-env opengl icon.frag.glsl
 比较全面的如下
 ```json
 {
@@ -32,7 +32,7 @@ glslangValidator.exe -V shader.frag
 
 #### 2.编译 hlsl shader
 这个用Microsoft自带的dxc工具，感觉不行 还是用vulkan SDK里面的DXC
-dxc.exe -T vs_6_0 -E main -spirv -fspv-target-env=vulkan1.2 -Fo iconVS.spv ICONVert.hlsl
+dxc.exe -T vs_6_0 -E main -spirv -fspv-target-env=vulkan1.2  -fvk-use-gl-layout -Fo iconVS.spv ICONVert.hlsl
 虽然可以编译，但是对opengl的代码需要改动，uniform来自cbuffer了，我都不知道如何改。不过这个cbuffer跟用
 ```
 // Shadertoy风格的uniforms - 所有非不透明uniform都需要指定location
@@ -55,5 +55,8 @@ cbuffer ShaderParams : register(b0)
 };
 ```
 ~~算了，感觉用vulkan的时候用hlsl的话，在编译过程实在要处理的细节太多了。这个用例就先放弃了吧。~~
-不行，这个问题还是要解决，支持多个backend是一般引擎的通用要求。
+~~不行，这个问题还是要解决，支持多个backend是一般引擎的通用要求。~~
+算了，shader 还是用glsl形式吧
+
+
 

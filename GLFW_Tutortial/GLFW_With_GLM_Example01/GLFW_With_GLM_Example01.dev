@@ -1,7 +1,7 @@
 [Project]
 filename = GLFW_With_GLM_Example01.dev
 name = GLFW_With_GLM_Example01
-UnitCount = 9
+UnitCount = 2
 Type = 1
 Ver = 3
 Includes = 
@@ -44,8 +44,21 @@ UseUTF8 = 1
 
 
 [Unit1]
-FileName = shader.vs
-Folder = 其他文件
+FileName = main.cpp
+Folder = 源文件
+Compile = 1
+Link = 1
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
+RealEncoding = UTF-8
+CompileCpp = 1
+
+
+[Unit2]
+FileName = shader.h
+Folder = 头文件
 Compile = 0
 Link = 0
 Priority = 1000
@@ -56,21 +69,8 @@ RealEncoding = UTF-8
 CompileCpp = 0
 
 
-[Unit2]
-FileName = shader.fs
-Folder = 其他文件
-Compile = 0
-Link = 0
-Priority = 1000
-OverrideBuildCmd = 0
-BuildCmd = 
-FileEncoding = PROJECT
-RealEncoding = ASCII
-CompileCpp = 1
-
-
 [Unit3]
-FileName = EyePS.spv
+FileName = shader.fs
 CompileCpp = 1
 Folder = 其他文件
 Compile = 0
@@ -79,20 +79,20 @@ Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = ASCII
+RealEncoding = UTF-8
 
 
 [Unit4]
-FileName = EyePS.frag
-CompileCpp = 1
-Folder = 其他文件
+FileName = shader.h
+CompileCpp = 0
+Folder = 头文件
 Compile = 0
 Link = 0
 Priority = 1000
 OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
-RealEncoding = ASCII
+RealEncoding = UTF-8
 
 
 [VersionInfo]
@@ -129,20 +129,8 @@ RealEncoding = ASCII
 
 
 [Unit6]
-FileName = main.cpp
-CompileCpp = 1
-Folder = 源文件
-Compile = 1
-Link = 1
-Priority = 1000
-OverrideBuildCmd = 0
-BuildCmd = 
-FileEncoding = PROJECT
-RealEncoding = UTF-8
-
-
-[Unit7]
 FileName = shader_wireframe.fs
+CompileCpp = 1
 Folder = 其他文件
 Compile = 0
 Link = 0
@@ -151,12 +139,24 @@ OverrideBuildCmd = 0
 BuildCmd = 
 FileEncoding = PROJECT
 RealEncoding = UTF-8
+
+
+[Unit7]
+FileName = EyeVS.spv
+Folder = 其他文件
+Compile = 0
+Link = 0
+Priority = 1000
+OverrideBuildCmd = 0
+BuildCmd = 
+FileEncoding = PROJECT
+RealEncoding = ASCII
 CompileCpp = 1
 
 
 [Unit8]
-FileName = shader.h
-Folder = 头文件
+FileName = shader.vs
+Folder = 其他文件
 Compile = 0
 Link = 0
 Priority = 1000
