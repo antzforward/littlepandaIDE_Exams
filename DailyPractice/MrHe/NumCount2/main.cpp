@@ -1,5 +1,6 @@
 // A fast IO program
 #include <iostream>  // 只需要这个头文件
+#include <tuple>
 using namespace std;
 int taskCount(int n)
 {
@@ -14,6 +15,7 @@ int taskCount(int n)
 	}
 	return count;
 }
+
 int main()
 {
 	// added the two lines below
